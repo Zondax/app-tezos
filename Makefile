@@ -40,15 +40,21 @@ endif
 
 ifeq ($(TARGET_NAME),TARGET_NANOX)
 ICONNAME=icons/nano-x-tezos.gif
+OUTPUT_ELF ?= $(CURDIR)/output/app_x.elf
 else
 ICONNAME=icons/nano-s-tezos.gif
+OUTPUT_ELF ?= $(CURDIR)/output/app_s.elf
+endif
+
+ifeq ($(BAKING),tezos_baking)
+OUTPUT_ELF:=$(subst .elf,_baking.elf,$(OUTPUT_ELF))
 endif
 
 ################
 # Default rule #
 ################
 all: show-app default
-
+	cp $(CURDIR)/bin/app.elf ${OUTPUT_ELF}
 
 .PHONY: show-app
 show-app:
