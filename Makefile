@@ -46,7 +46,7 @@ ICONNAME=icons/nano-s-tezos.gif
 OUTPUT_ELF ?= $(CURDIR)/output/app_s.elf
 endif
 
-ifeq ($(BAKING),tezos_baking)
+ifeq ($(APP),tezos_baking)
 OUTPUT_ELF:=$(subst .elf,_baking.elf,$(OUTPUT_ELF))
 endif
 
