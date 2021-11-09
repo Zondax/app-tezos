@@ -41,7 +41,10 @@ typedef enum {
 typedef enum {
     BAKING_TYPE_BLOCK = 0,
     BAKING_TYPE_ENDORSEMENT = 1,
-    BAKING_TYPE_PREENDORSEMENT = 2
+    BAKING_TYPE_PREENDORSEMENT = 2,
+    BAKING_TYPE_TENDERBAKE_BLOCK = 3,
+    BAKING_TYPE_TENDERBAKE_ENDORSEMENT = 4,
+    BAKING_TYPE_TENDERBAKE_PREENDORSEMENT = 5
 } baking_type_t;
 
 // Return number of bytes to transmit (tx)
