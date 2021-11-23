@@ -119,7 +119,6 @@ struct consensus_op_wire {
     uint32_t chain_id;
     uint8_t branch[32];
     uint8_t tag;
-    uint16_t slot;
     uint32_t level;
     // ... beyond this we don't care
 } __attribute__((packed));
@@ -184,7 +183,7 @@ bool parse_consensus_operation(parsed_baking_data_t *const out,
     out->level = READ_UNALIGNED_BIG_ENDIAN(uint32_t, &op->level);
 
     switch (op->tag) {
-        case 10:  // emmy endorsement_with_slot
+        case 0:  // emmy endorsement (without slot)
             out->type = BAKING_TYPE_ENDORSEMENT;
             out->is_tenderbake = false;
             out->round = 0;  // irrelevant
@@ -194,6 +193,7 @@ bool parse_consensus_operation(parsed_baking_data_t *const out,
             if (length < sizeof(struct tenderbake_consensus_op_wire)) return false;
             struct tenderbake_consensus_op_wire const *const op = data;
             out->is_tenderbake = true;
+            out->level = READ_UNALIGNED_BIG_ENDIAN(uint32_t, &op->level);
             out->round = READ_UNALIGNED_BIG_ENDIAN(uint32_t, &op->round);
             if (op->tag == 20) {
                 out->type = BAKING_TYPE_TENDERBAKE_PREENDORSEMENT;
