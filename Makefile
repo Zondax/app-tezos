@@ -13,19 +13,19 @@ else ifeq ($(APP),tezos_wallet)
 APPNAME = "Tezos Wallet"
 endif
 
-ifeq ($(TARGET_NAME), TARGET_NANOX)
-APP_LOAD_FLAGS=--appFlags 0xa40  # APPLICATION_FLAG_LIBRARY + APPLICATION_FLAG_BOLOS_SETTINGS + BLE SUPPORT
-else
+ifeq ($(TARGET_NAME), TARGET_NANOS)
 APP_LOAD_FLAGS=--appFlags 0x800  # APPLICATION_FLAG_LIBRARY
+else
+APP_LOAD_FLAGS=--appFlags 0xa40  # APPLICATION_FLAG_LIBRARY + APPLICATION_FLAG_BOLOS_SETTINGS + BLE SUPPORT
 endif
-APP_LOAD_PARAMS=$(APP_LOAD_FLAGS) --curve ed25519 --curve secp256k1 --curve prime256r1 --path "44'/1729'" $(COMMON_LOAD_PARAMS)
+APP_LOAD_PARAMS=$(APP_LOAD_FLAGS) --curve ed25519 --curve secp256k1 --curve secp256r1 --path "44'/1729'" $(COMMON_LOAD_PARAMS)
 
 GIT_DESCRIBE ?= $(shell git describe --tags --abbrev=8 --always --long --dirty 2>/dev/null)
 
 VERSION_TAG ?= $(shell echo "$(GIT_DESCRIBE)" | cut -f1 -d-)
 APPVERSION_M=2
 APPVERSION_N=2
-APPVERSION_P=13
+APPVERSION_P=15
 APPVERSION=$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)
 
 # Only warn about version tags if specified/inferred
@@ -80,20 +80,22 @@ DEFINES   += COMMIT=\"$(COMMIT)\" APPVERSION_N=$(APPVERSION_N) APPVERSION_P=$(AP
 # DEFINES   += _Static_assert\(...\)=
 
 ifeq ($(TARGET_NAME),TARGET_NANOX)
-DEFINES   += IO_SEPROXYHAL_BUFFER_SIZE_B=300
 DEFINES   += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000
 DEFINES   += HAVE_BLE_APDU # basic ledger apdu transport over BLE
 
+SDK_SOURCE_PATH  += lib_blewbxx lib_blewbxx_impl
+endif
+
+ifeq ($(TARGET_NAME),TARGET_NANOS)
+DEFINES   += IO_SEPROXYHAL_BUFFER_SIZE_B=128
+else
+DEFINES   += IO_SEPROXYHAL_BUFFER_SIZE_B=300
 DEFINES   += HAVE_GLO096
 DEFINES   += HAVE_BAGL BAGL_WIDTH=128 BAGL_HEIGHT=64
 DEFINES   += HAVE_BAGL_ELLIPSIS # long label truncation feature
 DEFINES   += HAVE_BAGL_FONT_OPEN_SANS_REGULAR_11PX
 DEFINES   += HAVE_BAGL_FONT_OPEN_SANS_EXTRABOLD_11PX
 DEFINES   += HAVE_BAGL_FONT_OPEN_SANS_LIGHT_16PX
-
-SDK_SOURCE_PATH  += lib_blewbxx lib_blewbxx_impl
-else
-DEFINES   += IO_SEPROXYHAL_BUFFER_SIZE_B=128
 endif
 
 # Enabling debug PRINTF
@@ -102,10 +104,10 @@ ifneq ($(DEBUG),0)
 
         DEFINES += TEZOS_DEBUG
 
-        ifeq ($(TARGET_NAME),TARGET_NANOX)
-                DEFINES   += HAVE_PRINTF PRINTF=mcu_usb_printf
-        else
+        ifeq ($(TARGET_NAME),TARGET_NANOS)
                 DEFINES   += HAVE_PRINTF PRINTF=screen_printf
+        else
+                DEFINES   += HAVE_PRINTF PRINTF=mcu_usb_printf
         endif
 else
         DEFINES   += PRINTF\(...\)=
