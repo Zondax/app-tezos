@@ -10,3 +10,6 @@ src/delegates.h
 #ide
 *.code-workspace
 compile_commands.json
+
+output
+pkg
