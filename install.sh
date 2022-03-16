@@ -24,9 +24,6 @@ python -m ledgerblue.loadApp \
     --appFlags 0x00 \
     --dataSize "$(grep _nvram_data_size "$app_dir/debug/app.map" | tr -s ' ' | cut -f2 -d' ')" \
     --tlv \
-    --curve ed25519 \
-    --curve secp256k1 \
-    --curve secp256r1 \
     --targetId "${TARGET_ID:-0x31100004}" \
     --delete \
     --path 44"'"/1729"'" \

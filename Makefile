@@ -8,17 +8,20 @@ APP=tezos_wallet
 endif
 
 ifeq ($(APP),tezos_baking)
-APPNAME = "Tezos Baking"
+APPNAME = "Tezos_Baking"
 else ifeq ($(APP),tezos_wallet)
-APPNAME = "Tezos Wallet"
+APPNAME = "Tezos_Wallet"
 endif
 
-ifeq ($(TARGET_NAME), TARGET_NANOS)
-APP_LOAD_FLAGS=--appFlags 0x800  # APPLICATION_FLAG_LIBRARY
-else
+APPPATH = "44'/1729'"
+
+ifeq ($(TARGET_NAME), TARGET_NANOX)
 APP_LOAD_FLAGS=--appFlags 0xa40  # APPLICATION_FLAG_LIBRARY + APPLICATION_FLAG_BOLOS_SETTINGS + BLE SUPPORT
+else
+APP_LOAD_FLAGS=--appFlags 0x800  # APPLICATION_FLAG_LIBRARY
 endif
-APP_LOAD_PARAMS=$(APP_LOAD_FLAGS) --curve ed25519 --curve secp256k1 --curve secp256r1 --path "44'/1729'" $(COMMON_LOAD_PARAMS)
+
+APP_LOAD_PARAMS=$(APP_LOAD_FLAGS) --path ${APPPATH} $(COMMON_LOAD_PARAMS)
 
 GIT_DESCRIBE ?= $(shell git describe --tags --abbrev=8 --always --long --dirty 2>/dev/null)
 
@@ -44,17 +47,40 @@ else
   $(info COMMIT=$(COMMIT))
 endif
 
-ifeq ($(TARGET_NAME),TARGET_NANOS)
-ICONNAME=icons/nano-s-tezos.gif
-else
+ifeq ($(TARGET_NAME),TARGET_NANOX)
 ICONNAME=icons/nano-x-tezos.gif
+OUTPUT_ELF ?= $(CURDIR)/output/app_x.elf
+OUTPUT_INSTALLER := $(CURDIR)/pkg/installer_x.sh
+else
+ICONNAME=icons/nano-s-tezos.gif
+OUTPUT_ELF ?= $(CURDIR)/output/app_s.elf
+OUTPUT_INSTALLER := $(CURDIR)/pkg/installer_s.sh
+endif
+
+
+ifeq ($(APP),tezos_baking)
+OUTPUT_ELF:=$(subst .elf,_baking.elf,$(OUTPUT_ELF))
+OUTPUT_INSTALLER:=$(subst installer,installer_baking,$(OUTPUT_INSTALLER))
 endif
 
 ################
 # Default rule #
 ################
 all: show-app default
-
+	@echo "#!/usr/bin/env bash" > $(OUTPUT_INSTALLER)
+	@echo "APPNAME=${APPNAME}" >> $(OUTPUT_INSTALLER)
+	@echo "APPVERSION=\"${APPVERSION}\"" >> $(OUTPUT_INSTALLER)
+	@echo "APPPATH=\""${APPPATH}"\"" >> $(OUTPUT_INSTALLER)
+	@echo "LOAD_PARAMS='${APP_LOAD_PARAMS}'" >> $(OUTPUT_INSTALLER)
+	@echo "DELETE_PARAMS='${COMMON_DELETE_PARAMS}'" >> $(OUTPUT_INSTALLER)
+	@echo "APPHEX=\"" >> $(OUTPUT_INSTALLER)
+	@cat $(CURDIR)/bin/app.hex >> $(OUTPUT_INSTALLER)
+	@echo "\"" >> $(OUTPUT_INSTALLER)
+	@cat $(CURDIR)/installer_template.sh >> $(OUTPUT_INSTALLER)
+	@chmod +x $(OUTPUT_INSTALLER)
+	@cp $(CURDIR)/bin/* $(CURDIR)/output
+	@cp $(CURDIR)/output/app.elf ${OUTPUT_ELF}
+	@rm $(CURDIR)/output/app.elf
 
 .PHONY: show-app
 show-app:
@@ -114,9 +140,8 @@ endif
 ##############
 ifneq ($(BOLOS_ENV),)
 $(info BOLOS_ENV=$(BOLOS_ENV))
-CLANGPATH := $(BOLOS_ENV)/clang-arm-fropi/bin/
-GCCPATH := $(BOLOS_ENV)/gcc-arm-none-eabi-5_3-2016q1/bin/
-CFLAGS += -idirafter $(BOLOS_ENV)/gcc-arm-none-eabi-5_3-2016q1/arm-none-eabi/include
+CLANGPATH := /usr/bin/
+GCCPATH := /usr/bin/
 else
 $(info BOLOS_ENV is not set: falling back to CLANGPATH and GCCPATH)
 endif
